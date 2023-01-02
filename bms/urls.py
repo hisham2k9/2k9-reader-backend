@@ -20,11 +20,18 @@ from . import views
 urlpatterns = [
     # path('', views.home, name='home'),
     # path('home/', views.home, name='home'),
+    # path("", views.index, name="index"),
     path('books/', views.BooksView.as_view(), name='books'),
     path('book/', views.BookView.as_view(), name='books'),
     path('book/<int:pk>', views.BookView.as_view(), name='book'),
-    re_path(r'^media/uploads/(?P<pk>\w+)/books/*', views.BookView.as_view(), name='book'),
-    re_path(r'^media/uploads/(?P<pk>\w+)/book-covers/*', views.BookView.as_view(), name='book'),
+    path('storage/', views.StorageView.as_view(), name='storage'),
+    # re_path(r'^media/uploads/(?P<pk>\w+)/books/*', views.BookCoverView.as_view(), name='book_covers'),
+    # re_path(r'^media/uploads/(?P<pk>\w+)/book-covers/*', views.BookCoverView.as_view(), name='book_covers'),
+    # re_path(r'^/uploads/(?P<pk>\w+)/book-covers/*', views.BookCoverView.as_view(), name='book_covers'),
+    # re_path(r'^media/uploads/(?P<pk>\w+)/books/*', views.BookCoverView.as_view(), name='book_covers'),
+    
+    re_path(r'^uploads/(?P<pk>\w+)/books/*', views.BookCoverView.as_view(), name='book_covers'),
+    # re_path(r'', views.error404, name = 'notFound'),
     #re_path(r'media/(?P<path>.*)$'
 
    

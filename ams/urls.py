@@ -17,8 +17,18 @@ from django.contrib import admin
 from django.urls import path, include,re_path
 from . import views
 
+# urlpatterns = [
+#     path('login/', views.login, name='login'),
+#     path('logout/', views.logout, name='logout'),
+   
+#     ]
+
+    
 urlpatterns = [
+    path("redirect-to-front/", views.redirect_to_front, name = 'redirect-to-front'),
+    path("csrf/", views.get_csrf, name="api-csrf"),
     path('login/', views.login, name='login'),
     path('logout/', views.logout, name='logout'),
-   
-    ]
+    path('oauth/', include('social_django.urls', namespace='social')),
+    path("whoami/", views.WhoAmIView.as_view(), name="whoami"),
+]

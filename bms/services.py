@@ -3,6 +3,7 @@ import sys
 import zipfile
 from lxml import etree
 from PIL import Image
+from django.conf import settings
 
 namespaces = {
    "calibre":"http://calibre.kovidgoyal.net/2009/metadata",
@@ -66,7 +67,7 @@ def get_epub_cover(epub_path):
             with z.open(cover_path) as file: # b is important -> binary
                 fileContent = file.read()
             return fileContent
-    except:
+    except Exception as ex:
         return None
 
 
@@ -104,3 +105,21 @@ def epub_info(fname):
         }   
     except:
         return {"title":"","language":"","creator":"","date":"","identifier":""}
+
+def storage_availability_check(request):
+    """
+    validates storage availability from 
+    request content length. if content length 
+    absent from request, it will raise an exception
+    """
+    try:
+        used_size = 0
+        folder_path = f"{settings.MEDIA_ROOT}/uploads/{request.user.id}/books"
+        for ele in os.scandir(folder_path):
+            used_size+=os.path.getsize(ele)
+        available_storage= request.user.storage_limit - used_size
+        book_size = int(request.META.get('CONTENT_LENGTH')) 
+        if book_size > available_storage:
+            raise ValueError("Book size exceeds available storage")
+    except Exception as ex:
+        raise Exception(str(ex))
