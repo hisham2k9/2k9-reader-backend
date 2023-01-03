@@ -6,7 +6,7 @@ from django.contrib.admin.forms import AdminAuthenticationForm
 from rest_framework.authtoken.models import Token
 # Create your views here.
 import json
-
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate, login
 from django.http import JsonResponse
 from django.middleware.csrf import get_token
@@ -14,15 +14,26 @@ from django.views.decorators.http import require_POST
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
+from rest_framework.authtoken.models import Token
+from django.core.exceptions import ObjectDoesNotExist
+
+def get_tokens_for_user(request):
+    user = request.user
+    print(request.user)
+    logout(request)
+    auth.login(request, user,  backend='django.contrib.auth.backends.ModelBackend')
+    token = Token.objects.get_or_create(user = request.user,)[0]
+    return token
 
 
 def redirect_to_front(request):
-    token = None
-    if request.user.is_authenticated:
-        token = Token.objects.create(user = request.user)
     response = redirect('http://localhost:3000/signin')
-    response["Token"] = token if token else ""
+    if request.user.is_authenticated:
+        d = get_tokens_for_user(request)
+        print(d)
+        response.set_cookie("token",d)
     return response
+
 def get_csrf(request):
     response = JsonResponse({"Info": "Success - Set CSRF cookie"})
     response["X-CSRFToken"] = get_token(request)
@@ -31,9 +42,16 @@ def get_csrf(request):
 
 
 def logout(request):
+    
+    try:
+        request.user.auth_token.delete()
+    except (AttributeError, ObjectDoesNotExist):
+        import traceback
+        traceback.print_exc()
     auth.logout(request)
     print('user logged out')
-    return redirect( 'login')
+    print(request.user)
+    return JsonResponse({"acknowledged":True}, status=200)
 
 def login(request):
     context={}
@@ -44,7 +62,7 @@ def login(request):
         password= request.POST['password']
         user = auth.authenticate(request,username=username, password=password)
         if user is not None:
-            auth.login(request, user)
+            auth.login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             redirect_link=request.POST['next'] if 'next' in request.POST else "books"
             return redirect(redirect_link)
         else:   
@@ -79,11 +97,10 @@ def login(request):
 
 
 class WhoAmIView(APIView):
-    authentication_classes = [SessionAuthentication]
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     @staticmethod
     def get(request, format=None):
-        print(request.user.is_staff)
+        print(request.user  )
         return JsonResponse({"username": request.user.username})
 

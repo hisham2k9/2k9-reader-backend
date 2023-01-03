@@ -42,7 +42,7 @@ class BooksView(APIView):
     """
     view on CRUD on books
     """
-    
+    permission_classes = (IsAuthenticated,)
     def get(self, request):
         """
         returns book list or particular book if id is !=0
@@ -73,7 +73,7 @@ class BookView(APIView):
     """
     View for CRUD on Book
     """
-    authentication_classes = [authentication.BasicAuthentication]
+    # authentication_classes = [authentication.BasicAuthentication]
     permission_classes = (IsAuthenticated,)
     
     def delete(self,request,pk=0):
@@ -232,7 +232,7 @@ class BookCoverView(APIView):
     """
     get image cover of all user books
     """
-    authentication_classes = [authentication.BasicAuthentication]
+    # authentication_classes = [authentication.BasicAuthentication]
     permission_classes = (IsAuthenticated,)
     def get(self, request,pk=0):
         """

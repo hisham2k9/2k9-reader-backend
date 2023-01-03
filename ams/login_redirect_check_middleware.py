@@ -1,12 +1,12 @@
 from django.conf import settings
-from .serializers import GenericResponse, GenericResponseSerializer
 import logging,uuid,traceback
 from django.http import JsonResponse
 from utils.custom_log_writer import log
+from .views import get_tokens_for_user
 logger = logging.getLogger("ReaderLogger")
 
 
-class SizeCheckMiddleware:
+class LoginRedirectCheckMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
         # One-time configuration and initialization.
@@ -14,22 +14,17 @@ class SizeCheckMiddleware:
     def __call__(self, request):
         # Code to be executed for each request before
         # the view (and later middleware) are called.
-        try:
-            size = int(request.META.get('CONTENT_LENGTH')) if request.META.get('CONTENT_LENGTH') != '' else 0
-            if size > settings.DATA_UPLOAD_MAX_MEMORY_SIZE:
-                raise Exception("Upload size too big")
-        except Exception as ex:
-            _id = str(uuid.uuid4())
-            req = reqObj(request.META)
-            log(req, _id, "File too big", "",None )
-            logger.info("POST: {} | ID: {} | HOST: {} data: {}".format(request.path,_id, request.get_host(), "data too long"))
-            responseObject = GenericResponse(_id=_id, status="-3",errorMessage=[str(ex)])
-            response=GenericResponseSerializer(responseObject)
-            log(req, _id, "File too big", response.data,traceback.format_exc())
-            return JsonResponse(response.data, status=400)
+        
 
         response = self.get_response(request)
-        
+        if request.path == '/redirect-to-front/' and request.user.is_authenticated:
+            d = get_tokens_for_user(request.user)
+            response.set_cookie("access",d[0],"",max_age=100)
+            response.set_cookie("refresh",d[1],"",max_age=100)
+        else:
+            response.set_cookie("access","","", max_age=100)
+            response.set_cookie("refresh","","",max_age=100)
+        #response["access"] = "12312"
         # Code to be executed for each request/response after
         # the view is called.
 
